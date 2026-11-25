@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pivot — 3D logo studio</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="studio.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<header><h1><img src="pivot.svg" alt="Pivot"></h1><div class="actions"><button id="openTutorial" class="quiet" type="button">Tutorial</button><label class="button upload">Upload SVG<input id="logo" type="file" accept=".svg,image/svg+xml"></label><button id="openExport" class="primary" disabled>Export</button></div></header>
+<main>
+<section class="workspace" aria-label="Live preview">
+<div class="stage" id="stage"><div class="stage-head"><span id="filename">Sample mark</span><span id="frameLabel">1:1</span></div><div id="viewport" aria-label="3D logo preview"></div></div>
+<div class="transport"><button id="poseButton" type="button">Pose for PNG</button><button id="play" aria-label="Pause animation">Pause</button><input id="scrub" type="range" min="0" max="1" step=".001" value="0" aria-label="Playback position"><output id="time">0.0 s</output></div>
+<p id="status" role="status">Loading the studio…</p>
+</section>
+<aside>
+<nav aria-label="Studio controls"><button data-panel="shape" aria-pressed="true">Shape</button><button data-panel="material" aria-pressed="false">Material</button><button data-panel="scene" aria-pressed="false">Scene</button><button data-panel="motion" aria-pressed="false">Motion</button></nav>
+<section id="shape" class="panel"><h2>Shape</h2><label>Extrusion depth<input id="depth" type="range" min=".02" max="1.25" step=".01" value=".31"></label><label>Bevel<input id="bevel" type="range" min="0" max=".15" step=".005" value=".055"></label><label>Logo size<input id="size" type="range" min=".55" max="1.3" step=".01" value="1"></label></section>
+<section id="material" class="panel" hidden><h2>Material</h2><label>Material library<select id="savedMaterial"><option value="">Choose a saved material</option></select></label><label><input id="matchSides" type="checkbox" checked> Match sides and bevel to face</label><label>Apply to<select id="surface" disabled><option value="face">Front and back</option><option value="side">Sides and bevel</option></select></label><label>Finish<select id="finish"><option value="enamel">Glossy enamel</option><option value="matte">Matte plastic</option><option value="chrome">Chrome</option><option value="metal">Satin metal</option><option value="gold">Polished gold</option><option value="obsidian">Glossy obsidian</option><option value="stone">Rough stone</option><option value="grass">Grass blades</option><option value="custom">Custom</option></select></label><label class="color">Tint<input id="tint" type="color"></label><label>Roughness<input id="roughness" type="range" min="0" max="1" step=".01"></label><label>Metalness<input id="metalness" type="range" min="0" max="1" step=".01"></label><div id="grassControls" hidden><label>Blade length<input id="grassLength" type="range" min=".035" max=".25" step=".005" value=".13"></label><label>Blade density<input id="grassDensity" type="range" min=".15" max="2.5" step=".05" value="1"></label></div><details><summary>Custom textures</summary><label>Load texture maps together<input id="textureSet" type="file" multiple accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"></label><p>Select PNG, JPG, or WebP maps from one extracted material pack, or assign them individually.</p><p id="textureStatus" role="status"></p><div id="textures"></div><label>Texture repeat<input id="repeat" type="range" min=".5" max="8" step=".1" value="1"></label><label>Texture rotation<input id="textureAngle" type="range" min="-180" max="180" step="1" value="0"></label><label>Surface detail<input id="detail" type="range" min="0" max="3" step=".05" value="1"></label></details><details><summary>Save this material</summary><label>Material name<input id="materialName" type="text" maxlength="64"></label><button id="saveMaterial" type="button">Save to library</button></details><p id="libraryStatus" role="status"></p></section>
+<section id="scene" class="panel" hidden><h2>Scene</h2><label>Framing<select id="ratio"><option value="1">Square · 1:1</option><option value=".5625">Vertical · 9:16</option></select></label><label class="color">Background<input id="background" type="color" value="#242424"></label><label><input id="transparent" type="checkbox"> Transparent background</label><label>Background image<input id="backdrop" type="file" accept="image/png,image/jpeg,image/webp"></label><button id="clearBackdrop">Remove image</button><label>Studio lights<select id="rig"><option value="softbox">Softbox</option><option value="strip">Strip lights</option><option value="raking">Low side light</option></select></label><label>Reflection angle<input id="lightAngle" type="range" min="-180" max="180" step="1" value="0"></label><label>Light intensity<input id="lighting" type="range" min=".2" max="2.5" step=".05" value="1"></label><label>Fill light<input id="fillLight" type="range" min="0" max="2" step=".05" value=".65"></label><label>Camera tilt<input id="tilt" type="range" min="-89" max="89" step="1" value="8"></label></section>
+<section id="motion" class="panel" hidden><h2>Motion</h2><label>Animation<select id="animation"><option value="spin">Spin</option><option value="rock">Rock</option><option value="light">Light sweep</option><option value="still">Still</option></select></label><div id="poseControls" hidden><p>Drag the preview to turn and tilt the logo, or set each axis below.</p><label>Tilt (X) <output id="poseXDegrees">0°</output><input id="poseX" type="range" min="-180" max="180" step=".1" value="0"></label><label>Turn (Y) <output id="poseYDegrees">13°</output><input id="poseY" type="range" min="-180" max="180" step=".1" value="13"></label><label>Roll (Z) <output id="poseZDegrees">0°</output><input id="poseZ" type="range" min="-180" max="180" step=".1" value="0"></label><button type="button" id="resetPose">Reset axes</button> <button type="button" class="primary" id="poseExport">Export PNG</button></div><div id="loopControls"><label id="spinAxisControl">Rotation axis<select id="spinAxis"><option value="y">Y · vertical</option><option value="x">X · horizontal</option><option value="z">Z · through the face</option></select></label><label>Loop duration<input id="duration" type="range" min="2" max="12" step=".5" value="5"></label><label>Direction<select id="direction"><option value="1">Clockwise</option><option value="-1">Counterclockwise</option></select></label></div></section>
+</aside>
+</main>
+<footer class="credit">Built by Abdulbasit Sulaemon. <a href="https://www.instagram.com/abbymahn/" target="_blank" rel="noopener noreferrer">Say Hi 👋</a></footer>
+<dialog id="exportDialog"><form method="dialog"><button class="close" aria-label="Close export">×</button></form><h2>Export</h2><label>Format<select id="format"><option value="mp4">MP4 · with background</option><option value="webm">WebM · with background</option><option value="alpha">WebM · transparent</option><option value="png">PNG · transparent still</option><option value="png-scene">PNG · with background</option></select></label><p id="exportInfo">Video records one full loop. Keep this tab visible during export.</p><button class="primary" id="download">Download</button></dialog>
+<dialog id="tutorialDialog" aria-labelledby="tutorialTitle">
+<form method="dialog"><button class="close" aria-label="Close tutorial">×</button></form>
+<h2 id="tutorialTitle">Using Pivot</h2>
+<p>Try these steps with the sample mark or upload an SVG of your own.</p>
+<ol>
+<li><strong>Shape the logo.</strong> Upload an SVG with text converted to paths. In Shape, adjust the extrusion depth, bevel, and size.</li>
+<li><strong>Choose a material.</strong> Pick a finish under Material. For ambientCG, unzip one pack and select its maps together under Custom textures. Save a finish to your material library to reuse it in this browser. Grass Blades has length and density controls.</li>
+<li><strong>Light and frame it.</strong> In Scene, choose lighting, adjust reflections and fill, and set a square or vertical frame. Choose a background color, background image, or transparency.</li>
+<li><strong>Make a loop.</strong> In Motion, try Spin, Rock, or Light Sweep. Choose an axis, direction, and duration. Click Export and choose MP4 or WebM.</li>
+<li><strong>Make a still.</strong> Click Pose for PNG. Drag to turn or tilt the logo, or use the three axis sliders. Export a PNG with or without the background. Back to video resumes from that pose.</li>
+</ol>
+</dialog>
+<script>document.getElementById("openTutorial").onclick = () => document.getElementById("tutorialDialog").showModal();</script>
+<script type="module">import("./studio.js").catch(() => { document.getElementById("status").textContent = "Could not load the 3D engine. Check your internet connection and reload."; });</script>
+</body></html>
+
+
+
+
+
+
+
+
+
+
+
+
+
