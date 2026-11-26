@@ -405,6 +405,7 @@ function syncSurface() {
     syncSliderEditor(property);
   }
   $('grassControls').hidden = settings.finish !== 'grass';
+  $('grassHint').hidden = settings.finish === 'grass';
   for (const [index, key] of ['face', 'side'].entries()) {
     const config = surfaces[$('matchSides').checked ? 'face' : key];
     const material = materials[index];

@@ -157,3 +157,16 @@ footer.credit a { margin-left: 4px; color: var(--ink); font-weight: 650; text-un
 .slider-value { appearance: textfield; width: 100%; min-width: 0; min-height: 34px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: #fafafa; font-size: .8125rem; font-variant-numeric: tabular-nums; text-align: right; }
 .slider-value::-webkit-inner-spin-button, .slider-value::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .map-assignment{overflow-wrap:anywhere;color:var(--muted)}#applyTextureSet{width:100%}
+.material-group { margin: 0 0 13px; padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: #fcfcfc; }
+.material-group h3, .material-group h4, .tutorial-sources h3 { margin: 0 0 12px; font-size: .9rem; letter-spacing: -.015em; }
+.material-group > label:last-child, .material-subgroup > label:last-child { margin-bottom: 0; }
+.material-subgroup { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+.material-subgroup > summary { color: var(--muted); }
+.map-review:not(:empty) { margin: 12px 0; padding: 8px; display: grid; gap: 6px; border-radius: 8px; background: #f0f0f0; }
+.map-review .map-assignment { margin: 0 !important; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; font-size: .8125rem; }
+.map-review select { margin-top: 4px; min-height: 34px; }
+#grassControls:not([hidden]) { padding: 8px 0 0; border-top: 1px solid var(--line); }
+.tutorial-sources { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 15px; }
+.tutorial-sources a { color: var(--ink); text-underline-offset: 3px; }
+.tutorial-shot { display: block; width: 100%; height: auto; margin: 10px 0 17px; border: 1px solid var(--line); border-radius: 8px; }
+.material-hint{margin:0;color:var(--muted);font-size:.8125rem;line-height:1.5}
