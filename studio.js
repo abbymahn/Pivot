@@ -540,57 +540,97 @@ function assignTexture(config, slot, file, texture) {
   if (slot === 'roughnessMap') config.roughness = 1;
   if (slot === 'metalnessMap') config.metalness = 1;
 }
+const mapLabels = {
+  map: 'Color texture', normalMap: 'Normal map', bumpMap: 'Bump map',
+  roughnessMap: 'Roughness map', metalnessMap: 'Metalness map'
+};
 function identifyMap(name) {
-  const stem = name.replace(/\.[^.]+$/, '').toLowerCase();
-  if (/(?:^|[_ .-])(?:normal[_-]?(?:gl|dx)|normal)$/.test(stem)) return 'normalMap';
-  if (/(?:^|[_ .-])(?:metalness|metallic)$/.test(stem)) return 'metalnessMap';
-  if (/(?:^|[_ .-])roughness$/.test(stem)) return 'roughnessMap';
-  if (/(?:^|[_ .-])(?:displacement|height|bump)$/.test(stem)) return 'bumpMap';
-  if (/(?:^|[_ .-])(?:base[_-]?colou?r|colou?r|albedo|diffuse)$/.test(stem)) return 'map';
+  const stem = name.replace(/\.[^.]+$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  const tokens = stem.split(/[^a-z0-9]+/);
+  if (tokens.some(token => ['orm', 'rma', 'mra', 'preview', 'thumbnail'].includes(token))) return;
+  const matches = patterns => patterns.some(pattern => tokens.includes(pattern));
+  if (matches(['normal', 'normalgl', 'normaldx', 'nrm', 'nor'])) return 'normalMap';
+  if (matches(['roughness', 'rough', 'rgh'])) return 'roughnessMap';
+  if (matches(['metalness', 'metallic', 'metalnessmap', 'mtl'])) return 'metalnessMap';
+  if (matches(['displacement', 'disp', 'height', 'bump'])) return 'bumpMap';
+  if (matches(['basecolor', 'basecolour', 'albedo', 'diffuse', 'diff', 'color', 'colour', 'col'])) return 'map';
 }
-$('textureSet').onchange = async () => {
-  const input = $('textureSet');
-  const files = Array.from(input.files);
-  if (!files.length) return;
+let batchMaps = [];
+function reviewTextureSet(selection) {
+  const files = Array.from(selection).filter(file => /\.(png|jpe?g|webp)$/i.test(file.name));
+  const assignments = $('mapAssignments');
+  assignments.replaceChildren();
+  const used = new Set();
+  batchMaps = files.sort((a, b) => Number(/normal[_ -]?gl/i.test(b.name)) - Number(/normal[_ -]?gl/i.test(a.name)))
+    .map(file => {
+      const row = document.createElement('label');
+      row.className = 'map-assignment';
+      row.textContent = file.name;
+      const select = document.createElement('select');
+      select.add(new Option('Skip', ''));
+      for (const [slot, label] of Object.entries(mapLabels)) select.add(new Option(label, slot));
+      const guessed = identifyMap(file.name);
+      if (guessed && !used.has(guessed)) {
+        select.value = guessed;
+        used.add(guessed);
+      }
+      row.append(select);
+      assignments.append(row);
+      return { file, select };
+    });
+  $('applyTextureSet').hidden = !batchMaps.length;
+  textureStatus(batchMaps.length ? 'Review the map types, then apply the set.' : 'Choose PNG, JPG, or WebP images.');
+}
+$('textureSet').onchange = () => {
+  $('textureFolder').value = '';
+  reviewTextureSet($('textureSet').files);
+};
+$('textureFolder').onchange = () => {
+  $('textureSet').value = '';
+  reviewTextureSet($('textureFolder').files);
+};
+$('applyTextureSet').onclick = async () => {
   const slots = new Map();
-  for (const file of files) {
-    if (!/\.(png|jpe?g|webp)$/i.test(file.name)) continue;
-    const slot = identifyMap(file.name);
-    if (slot && (!slots.has(slot) || /normal[_-]?gl/i.test(file.name))) slots.set(slot, file);
+  for (const { file, select } of batchMaps) {
+    if (!select.value) continue;
+    if (slots.has(select.value)) {
+      textureStatus('Choose only one image for each map type.');
+      return;
+    }
+    slots.set(select.value, file);
   }
   if (!slots.size) {
-    textureStatus('No map names recognized. Assign the images to the slots below.');
+    textureStatus('Assign at least one image to a map type.');
     return;
   }
   const config = selectedSurface();
-  input.disabled = true;
+  const controls = [$('textureSet'), $('textureFolder'), $('applyTextureSet'), ...batchMaps.map(entry => entry.select)];
+  controls.forEach(control => { control.disabled = true; });
   textureStatus('Loading texture maps…');
   let loaded = 0;
   const failed = [];
-  for (const [slot, file] of slots) {
-    try {
-      const texture = await readTexture(file, slot === 'map');
-      if (!loaded) {
-        for (const entry of Object.values(config.maps)) entry.texture.dispose();
-        Object.assign(config, { maps: {}, tint: '#ffffff', roughness: .6, metalness: 0 });
-      }
-      assignTexture(config, slot, file, texture);
-      loaded++;
-    } catch { failed.push(file.name); }
+  try {
+    for (const [slot, file] of slots) {
+      try {
+        const texture = await readTexture(file, slot === 'map');
+        if (!loaded) {
+          for (const entry of Object.values(config.maps)) entry.texture.dispose();
+          Object.assign(config, { maps: {}, tint: '#ffffff', roughness: .6, metalness: 0 });
+        }
+        assignTexture(config, slot, file, texture);
+        loaded++;
+      } catch { failed.push(file.name); }
+    }
+    syncSurface();
+    textureStatus([
+      loaded ? 'Applied ' + loaded + ' texture map' + (loaded === 1 ? '.' : 's.') : '',
+      failed.length ? 'Could not decode ' + failed.join(', ') + '.' : ''
+    ].filter(Boolean).join(' '));
+  } finally {
+    controls.forEach(control => { control.disabled = false; });
   }
-  input.disabled = false;
-  syncSurface();
-  const skipped = files.length - slots.size;
-  textureStatus([
-    loaded ? 'Applied ' + loaded + ' texture map' + (loaded === 1 ? '.' : 's.') : '',
-    skipped ? skipped + ' extra or unrecognized files skipped.' : '',
-    failed.length ? 'Could not decode ' + failed.join(', ') + '.' : ''
-  ].filter(Boolean).join(' '));
 };
-for (const [map, label] of Object.entries({
-  map: 'Color texture', normalMap: 'Normal map', bumpMap: 'Bump map',
-  roughnessMap: 'Roughness map', metalnessMap: 'Metalness map'
-})) {
+for (const [map, label] of Object.entries(mapLabels)) {
   const row = document.createElement('label');
   row.textContent = label;
   const input = document.createElement('input');
@@ -610,7 +650,6 @@ for (const [map, label] of Object.entries({
     config.maps[map]?.texture.dispose();
     delete config.maps[map];
     input.value = '';
-    $('textureSet').value = '';
     syncSurface();
   };
   input.onchange = async () => {
@@ -839,6 +878,7 @@ $('format').onchange = () => {
     'Video records one full loop. Keep this tab visible during export.';
 };
 try { setup(); } catch (error) { status('Could not start the 3D preview. ' + error.message); }
+
 
 
 

@@ -156,3 +156,4 @@ footer.credit a { margin-left: 4px; color: var(--ink); font-weight: 650; text-un
 .slider-row input[type="range"] { margin: 0; }
 .slider-value { appearance: textfield; width: 100%; min-width: 0; min-height: 34px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: #fafafa; font-size: .8125rem; font-variant-numeric: tabular-nums; text-align: right; }
 .slider-value::-webkit-inner-spin-button, .slider-value::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.map-assignment{overflow-wrap:anywhere;color:var(--muted)}#applyTextureSet{width:100%}
